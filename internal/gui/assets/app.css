@@ -415,6 +415,12 @@ body.side-drag, body.side-drag * { cursor: col-resize !important; user-select: n
 /* the traffic lights are the sidebar's top left, as in a Mac app's sidebar;
    the button and the magpie beside them, level with them (see .top above) */
 body.window.mac .side-top { height: calc(50px / var(--zoom, 1)); padding: calc(2px / var(--zoom, 1)) 0 0 calc(96px / var(--zoom, 1)); }
+/* level with the lights and the name: flex centres each box, but text draws
+   about a point below its box's centre and these icons at it, so the sidebar's
+   button and the magpie sat a point high, in the sidebar and the header alike
+   (one of each, moved by layoutNav); the drawing moves, the button's box and
+   hover stay */
+body.window.mac :is(#sideToggle svg, .brand .logo svg) { translate: 0 calc(1px / var(--zoom, 1)); }
 .side-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0 10px 10px; }
 /* laid from its end, Settings' button and the gateway's line kept where
    they are as Settings' tabs open over the button and the foot grows up

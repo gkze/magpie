@@ -10,6 +10,7 @@ package gui
 #import <mach-o/loader.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
+#include <stdlib.h>
 
 static const NSWindowButton lightKinds[3] = {NSWindowCloseButton, NSWindowMiniaturizeButton, NSWindowZoomButton};
 
@@ -223,10 +224,23 @@ static void insetLights(void *p) {
 	w.toolbar = nil;
 	[l apply];
 }
+
+// The window's appearance by name (macAppearance); none, the Mac's.
+static void lookLike(void *p, const char *name) {
+	((NSWindow *)p).appearance = name[0] ? [NSAppearance appearanceNamed:[NSString stringWithUTF8String:name]] : nil;
+}
 */
 import "C"
 
-import "github.com/wailsapp/wails/v3/pkg/application"
+import (
+	"context"
+	"time"
+	"unsafe"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
+
+	"github.com/yetone/magpie/internal/filememo"
+)
 
 // plainTitlebar gives the main window, in the design of macOS 26, the
 // corners of a window with a plain title bar (see insetLights); the traffic
@@ -237,6 +251,42 @@ func plainTitlebar(w *application.WebviewWindow) {
 			C.insetLights(p)
 		}
 	})
+}
+
+// followTheme keeps the main window's title bar, traffic lights included,
+// drawn for the saved theme (macAppearance) once the window has opened with
+// it (mainMacWindow): a change in Settings, a write here, at once; one by
+// another magpie or the CLI when Watch tells of it, or within OthersEvery.
+// A theme MAGPIE_THEME forces doesn't change (windowTheme). Until ctx ends.
+func (h *host) followTheme(ctx context.Context) {
+	if _, forced := windowTheme(); forced {
+		return
+	}
+	var shown string
+	// the first look sets it whatever it is, in case it changed as the window was made
+	for first := true; ; first = false {
+		written := filememo.Written() // before the look, so a write made during it isn't missed
+		if theme, _ := windowTheme(); first || theme != shown {
+			shown = theme
+			application.InvokeSync(func() {
+				w := h.main
+				if w == nil { // let go (lightweight mode); made again, it opens for the saved theme
+					return
+				}
+				if p := w.NativeWindow(); p != nil {
+					name := C.CString(string(macAppearance(theme)))
+					defer C.free(unsafe.Pointer(name))
+					C.lookLike(p, name)
+				}
+			})
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-written:
+		case <-time.After(filememo.OthersEvery()):
+		}
+	}
 }
 
 func nameWindow(*application.WebviewWindow, string) {}

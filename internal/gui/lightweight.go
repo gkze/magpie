@@ -38,9 +38,11 @@ func (h *host) makeMain(url string) *application.WebviewWindow {
 	if runtime.GOOS == "linux" && settings.Load().WindowMaximised {
 		state = application.WindowStateMaximised
 	}
-	// Windows' title bar in the page's colour from the first frame; the
-	// page keeps it so as its theme changes (TintTitleBar)
-	winOpts, winBg := windowChrome(cmp.Or(os.Getenv("MAGPIE_THEME"), settings.Load().Theme))
+	// Windows' title bar in the page's colour, and the Mac's drawn for the
+	// page's theme, from the first frame; the page keeps Windows' so as its
+	// theme changes (TintTitleBar), and followTheme the Mac's
+	theme, _ := windowTheme()
+	winOpts, winBg := windowChrome(theme)
 	w := h.app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:             "main",
 		Title:            "magpie",
@@ -52,7 +54,7 @@ func (h *host) makeMain(url string) *application.WebviewWindow {
 		Zoom:             z,
 		Hidden:           true,
 		StartState:       state,
-		Mac:              mainMacWindow(),
+		Mac:              mainMacWindow(theme),
 		Windows:          winOpts,
 		BackgroundColour: winBg,
 	})

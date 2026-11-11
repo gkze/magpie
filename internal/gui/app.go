@@ -394,9 +394,9 @@ func Run(version string, showMain bool, link string) error {
 			log.Println("open at login:", err)
 		}
 	}()
-	// MAGPIE_THEME=light|dark forces the palette; handy for screenshots.
+	// MAGPIE_THEME=light|dark forces the palette (windowTheme)
 	theme := ""
-	if t := os.Getenv("MAGPIE_THEME"); t != "" {
+	if t, forced := windowTheme(); forced {
 		theme = "&theme=" + t
 	}
 	h := &host{query: theme, ready: make(chan struct{})}
@@ -707,7 +707,8 @@ func Run(version string, showMain bool, link string) error {
 		h.main.OnWindowEvent(events.Windows.WebViewNavigationCompleted, func(*application.WindowEvent) { markReady() })
 	} else {
 		h.app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
-			plainTitlebar(h.main) // Linux: the page's header is the title bar; the Mac: a plain one's corners
+			plainTitlebar(h.main)        // Linux: the page's header is the title bar; the Mac: a plain one's corners
+			go h.followTheme(backendCtx) // the Mac: drawn for the saved theme as it changes
 			nameWindow(h.panel, panelTitle)
 			ownFrame(h.panel) // KDE: no title bar of KWin's on it (#1283)
 			markReady()

@@ -193,7 +193,7 @@ func init() {
 		runAndExit(app)
 	}
 	ref := func(tb application.MacTitleBar) *application.WebviewWindow {
-		m := mainMacWindow()
+		m := mainMacWindow("system")
 		m.TitleBar = tb
 		return app.Window.NewWithOptions(application.WebviewWindowOptions{URL: "/", Width: 900, Height: 600, Hidden: true, Mac: m})
 	}

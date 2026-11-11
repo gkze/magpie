@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"os"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -18,8 +19,12 @@ import (
 // shown instead, and can still be made full screen itself. Once shown it
 // stays on its Space (showHere), so a click on the Dock icon goes to it there
 // (reopenMain).
-func mainMacWindow() application.MacWindow {
+//
+// The window takes the page's theme from the start (macAppearance), so the
+// title bar and traffic lights are drawn for it before the page paints.
+func mainMacWindow(theme string) application.MacWindow {
 	return application.MacWindow{
+		Appearance: macAppearance(theme),
 		// no InvisibleTitleBarHeight: that strip drags from anywhere in
 		// it, tabs included; the header marks what drags instead. On
 		// macOS 26 and later its toolbar is taken off once it has placed
@@ -28,6 +33,33 @@ func mainMacWindow() application.MacWindow {
 		CollectionBehavior: application.MacWindowCollectionBehaviorMoveToActiveSpace |
 			application.MacWindowCollectionBehaviorFullScreenPrimary,
 	}
+}
+
+// windowTheme is the theme the main window and its page are drawn in:
+// MAGPIE_THEME's (light or dark, for screenshots), which holds it whatever
+// is saved, else the saved one.
+func windowTheme() (theme string, forced bool) {
+	if t := os.Getenv("MAGPIE_THEME"); t != "" {
+		return t, true
+	}
+	return settings.Load().Theme, false
+}
+
+// macAppearance is the Mac window's appearance for a theme (settings'
+// system | light | dark): light or dark mode's own for a theme of the page's
+// own, so a light page in a dark Mac doesn't get dark mode's traffic lights
+// over it, and the Mac's (the default) for system or a theme it doesn't know.
+// The webview takes prefers-color-scheme from the window's appearance, so a
+// page that follows the Mac keeps following it only in a window that does.
+// The window opens with it (mainMacWindow) and follows it (followTheme).
+func macAppearance(theme string) application.MacAppearanceType {
+	switch theme {
+	case "light":
+		return application.NSAppearanceNameAqua
+	case "dark":
+		return application.NSAppearanceNameDarkAqua
+	}
+	return application.DefaultAppearance
 }
 
 // frameOnlyResizeJS leaves resizing the main window on Windows to its own

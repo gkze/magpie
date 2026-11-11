@@ -18,7 +18,7 @@ import (
 // The window moves to the Space the user is on when shown, and can still go
 // full screen; it doesn't join every Space.
 func TestMainWindowFollowsActiveSpace(t *testing.T) {
-	m := mainMacWindow()
+	m := mainMacWindow("system")
 	b := m.CollectionBehavior
 	if b&application.MacWindowCollectionBehaviorMoveToActiveSpace == 0 {
 		t.Errorf("main window collection behaviour %d does not move to the active Space", b)
@@ -31,6 +31,32 @@ func TestMainWindowFollowsActiveSpace(t *testing.T) {
 	}
 	if m.TitleBar != application.MacTitleBarHiddenInset {
 		t.Errorf("main window title bar changed: %+v", m.TitleBar)
+	}
+}
+
+// A light page in a dark Mac got dark mode's traffic lights over it: the
+// window takes a theme of the page's own, and the Mac's for system, which
+// the page's prefers-color-scheme then keeps following.
+func TestMacAppearanceFollowsTheme(t *testing.T) {
+	for theme, want := range map[string]application.MacAppearanceType{
+		"light":  application.NSAppearanceNameAqua,
+		"dark":   application.NSAppearanceNameDarkAqua,
+		"system": application.DefaultAppearance,
+		"":       application.DefaultAppearance,
+		"sepia":  application.DefaultAppearance, // one it doesn't know follows the Mac
+	} {
+		if got := mainMacWindow(theme).Appearance; got != want {
+			t.Errorf("theme %q: the main window's appearance is %q, want %q", theme, got, want)
+		}
+	}
+}
+
+// MAGPIE_THEME holds the window's theme, its page's and its appearance,
+// whatever is saved.
+func TestWindowThemeForced(t *testing.T) {
+	t.Setenv("MAGPIE_THEME", "dark")
+	if theme, forced := windowTheme(); theme != "dark" || !forced {
+		t.Errorf("with MAGPIE_THEME=dark the window's theme is %q (forced %v), want dark, forced", theme, forced)
 	}
 }
 

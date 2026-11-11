@@ -117,7 +117,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       await page.waitForFunction(() => document.body.classList.contains("side-nav"));
       await frame(page);
       assert.equal(await page.evaluate(() => localStorage.getItem("magpie.navLayout")), "side");
-      assert.equal(Math.round((await page.locator("#side").boundingBox()).width), 184, "a narrower sidebar");
+      const lights = await page.evaluate(() => parseFloat(getComputedStyle(document.body).getPropertyValue("--side-lights")) || 0);
+      assert.equal(Math.round((await page.locator("#side").boundingBox()).width), 184 + lights, "a narrower sidebar (wider by the Mac's traffic lights' room)");
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), "the window does not scroll sideways");
       const [tb, cr, ac] = await page.evaluate(() => ["#sideToggle", "#crumb", ".top .actions"].map((q) => document.querySelector(q).getBoundingClientRect().toJSON()));
       assert.ok(tb.right <= cr.left + 0.5 && cr.right <= ac.left + 0.5, `the header's row apart: ${tb.right} ${cr.left} ${cr.right} ${ac.left}`);

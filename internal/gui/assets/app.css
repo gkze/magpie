@@ -386,8 +386,11 @@ body:not(.side-nav) #nav button[data-view="groups"], body.side-nav .rt-togroups 
 .nav-gl, .nav-ic, .side-l, .crumb { display: none; }
 /* at any width the reader picks it (app.js layoutNav); in a narrow window
    it gives the page more of the room */
-body.side-nav { --side-w: 212px; padding-left: var(--side-w); }
-@media (max-width: 859px) { body.side-nav { --side-w: 184px; } }
+body.side-nav { --side-w: calc(212px + var(--side-lights, 0px)); padding-left: var(--side-w); }
+@media (max-width: 859px) { body.side-nav { --side-w: calc(184px + var(--side-lights, 0px)); } }
+/* the Mac's traffic lights take the first 96px of its top (.side-top
+   below): the magpie keeps room before the sidebar's edge */
+body.window.mac { --side-lights: 16px; }
 .sidebar {
   position: fixed; left: 0; top: 0; bottom: 0; z-index: 10; width: var(--side-w);
   display: flex; flex-direction: column;

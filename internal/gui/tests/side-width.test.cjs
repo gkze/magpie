@@ -61,7 +61,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       await page.route("**/*", serve("en"));
       await page.goto("http://magpie.test/");
       await page.waitForSelector("#nav button.on");
-      assert.equal(await width(page), 212, "app.css's width to start");
+      // the Mac's traffic lights take room at its top, so it starts wider there (--side-lights)
+      const lights = await page.evaluate(() => parseFloat(getComputedStyle(document.body).getPropertyValue("--side-lights")) || 0);
+      assert.equal(await width(page), 212 + lights, "app.css's width to start");
 
       // the edge is a separator a reader can find, and doesn't drag the window
       assert.equal(await page.locator("#sideEdge").getAttribute("role"), "separator");
